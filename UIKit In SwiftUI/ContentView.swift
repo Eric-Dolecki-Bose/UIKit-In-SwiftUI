@@ -36,6 +36,19 @@ struct MapView: UIViewRepresentable
     }
 }
 
+struct ActivityIndicator: UIViewRepresentable {
+    @Binding var isAnimating: Bool
+    let style: UIActivityIndicatorView.Style
+    func makeUIView(context: UIViewRepresentableContext<ActivityIndicator>) -> UIActivityIndicatorView {
+        return UIActivityIndicatorView(style: style)
+    }
+    func updateUIView(_ uiView: UIActivityIndicatorView, context: UIViewRepresentableContext<ActivityIndicator>) {
+        isAnimating ? uiView.startAnimating() : uiView.stopAnimating()
+    }
+}
+
+
+
 struct Panel: View {
     var body: some View {
         VStack {
@@ -47,16 +60,18 @@ struct Panel: View {
                 .cornerRadius(15.0)
                     .overlay (
                         Text("London, England")
-                        .foregroundColor(.white)
-                        .background(Color(.clear))
-                        .frame(width:200, height: 40)
-                        .font(.headline)
+                            .foregroundColor(.white)
+                            .background(Color(.clear))
+                            .frame(width:200, height: 40)
+                            .font(.headline)
                     )
                    }.padding(.bottom, 70)
         }
 }
 
 struct ContentView: View {
+    
+    @State var myCurrentPage: Int = 0
     
     var body: some View {
         ZStack {
@@ -67,12 +82,36 @@ struct ContentView: View {
                 VStack {
                     Panel()
                         .background(Color(.clear))
+                        .padding(.bottom, -50)
+                    
+                    // The ActivityIndicatorView can be tapped to adjust PageControl.
+                    Button(action: {
+                        self.increasePage()
+                    }) {
+                        ActivityIndicator(isAnimating: .constant(true), style: .large)
+                        .colorScheme(.dark)
+                        .padding(.bottom, 60)
+                    }
                 }
+            }
+            ZStack {
+                VStack {
+                    Spacer()
+                    PageControl(numberOfPages: 5, currentPage: .constant(myCurrentPage))
+                }.padding(.bottom, 20)
             }
         }
         .edgesIgnoringSafeArea(.all)
         .statusBar(hidden: true)
     }
+    
+    func increasePage() {
+        myCurrentPage = myCurrentPage + 1
+        if myCurrentPage > 4 {
+            myCurrentPage = 0
+        }
+    }
+    
 }
 
 struct ContentView_Previews: PreviewProvider {

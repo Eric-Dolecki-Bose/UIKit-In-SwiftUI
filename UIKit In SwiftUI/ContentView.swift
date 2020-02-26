@@ -11,7 +11,11 @@ import MapKit
 
 struct MapView: UIViewRepresentable
 {
-    @Binding var centerCoordinate: CLLocationCoordinate2D
+    @Binding var centerCoordinate: CLLocationCoordinate2D {
+        didSet {
+            //print("didSet Center Coordinate.")
+        }
+    }
     
     func makeUIView(context: Context) -> MKMapView {
         let mapView = MKMapView()
@@ -27,8 +31,7 @@ struct MapView: UIViewRepresentable
         }
         
         func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
-            //print(#function)
-            //parent.centerCoordinate = mapView.centerCoordinate
+            parent.centerCoordinate = mapView.centerCoordinate
         }
     }
     

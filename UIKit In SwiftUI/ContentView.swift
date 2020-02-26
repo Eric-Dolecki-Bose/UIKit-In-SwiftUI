@@ -11,27 +11,50 @@ import MapKit
 
 struct MapView: UIViewRepresentable
 {
+    @Binding var centerCoordinate: CLLocationCoordinate2D
+    
     func makeUIView(context: Context) -> MKMapView {
-        MKMapView(frame: .zero)
+        let mapView = MKMapView()
+        mapView.delegate = context.coordinator
+        return mapView
+    }
+    
+    class Coordinator: NSObject, MKMapViewDelegate {
+        var parent: MapView
+
+        init(_ parent: MapView) {
+            self.parent = parent
+        }
+        
+        func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+            //print(#function)
+            //parent.centerCoordinate = mapView.centerCoordinate
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
     }
     
     func updateUIView(_ view: MKMapView, context: Context) {
-        let coordinate = CLLocationCoordinate2D(
-            latitude: 51.5074, longitude: -0.127758)
+        
+        print(#function)
+
         let span = MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-        let region = MKCoordinateRegion(center: coordinate, span: span)
+        let region = MKCoordinateRegion(center: centerCoordinate, span: span)
         
         view.showsBuildings = true
         view.showsScale = true
         view.mapType = .hybridFlyover
         
         let mapCamera = MKMapCamera()
-        mapCamera.centerCoordinate = coordinate
-        mapCamera.pitch = 45
-        mapCamera.altitude = 500 // example altitude
-        mapCamera.heading = 45
+        mapCamera.centerCoordinate = centerCoordinate
+        mapCamera.pitch = 70
+        mapCamera.altitude = 500
+        mapCamera.heading = 260
         
         view.setRegion(region, animated: true)
+        view.setCenter(centerCoordinate, animated: true)
         view.camera = mapCamera
     }
 }
@@ -46,8 +69,6 @@ struct ActivityIndicator: UIViewRepresentable {
         isAnimating ? uiView.startAnimating() : uiView.stopAnimating()
     }
 }
-
-
 
 struct Panel: View {
     var body: some View {
@@ -72,17 +93,25 @@ struct Panel: View {
 struct ContentView: View {
     
     @State var myCurrentPage: Int = 0
+    @State var myCenter = CLLocationCoordinate2D(latitude: 51.5003646652, longitude: -0.1214328476)
     
     var body: some View {
         ZStack {
             VStack {
-                MapView()
+                MapView(centerCoordinate: .constant(myCenter))
+                    
             }
             ZStack {
                 VStack {
-                    Panel()
-                        .background(Color(.clear))
-                        .padding(.bottom, -50)
+                    
+                    Button(action: {
+                        self.recenterMap()
+                    }) {
+                        Panel()
+                            .background(Color(.clear))
+                            .padding(.bottom, -50)
+                    }
+                    
                     
                     // The ActivityIndicatorView can be tapped to adjust PageControl.
                     Button(action: {
@@ -112,10 +141,17 @@ struct ContentView: View {
         }
     }
     
+    func recenterMap() {
+        print("TODO: re-center the map.")
+        let thisCenter = CLLocationCoordinate2D(latitude: 51.5003646652, longitude: -0.1214328476)
+        MapView(centerCoordinate: .constant(thisCenter))
+    }
 }
 
+#if DEBUG
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
     }
 }
+#endif

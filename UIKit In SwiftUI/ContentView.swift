@@ -9,56 +9,52 @@
 import SwiftUI
 import MapKit
 
-struct MapView: UIViewRepresentable
-{
-    @Binding var centerCoordinate: CLLocationCoordinate2D {
-        didSet {
-            //print("didSet Center Coordinate.")
-        }
-    }
-    
-    func makeUIView(context: Context) -> MKMapView {
-        let mapView = MKMapView()
-        mapView.delegate = context.coordinator
-        return mapView
-    }
-    
-    class Coordinator: NSObject, MKMapViewDelegate {
-        var parent: MapView
+// Trying another approach.
 
-        init(_ parent: MapView) {
-            self.parent = parent
-        }
-        
-        func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
-            parent.centerCoordinate = mapView.centerCoordinate
-        }
+class SomeView: MKMapView {
+    
+    func foo() {
+        print("Foo was called.")
+        let centerCoordinate = CLLocationCoordinate2D(latitude: 51.5003646652, longitude: -0.1214328476)
+        self.setCenter(centerCoordinate, animated: true)
     }
     
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    func updateUIView(_ view: MKMapView, context: Context) {
-        
-        print(#function)
-
+    func setUp() {
         let span = MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
         let region = MKCoordinateRegion(center: centerCoordinate, span: span)
-        
-        view.showsBuildings = true
-        view.showsScale = true
-        view.mapType = .hybridFlyover
-        
+        self.showsBuildings = true
+        self.showsScale = true
+        self.mapType = .hybridFlyover
         let mapCamera = MKMapCamera()
         mapCamera.centerCoordinate = centerCoordinate
         mapCamera.pitch = 70
         mapCamera.altitude = 500
         mapCamera.heading = 260
-        
-        view.setRegion(region, animated: true)
-        view.setCenter(centerCoordinate, animated: true)
-        view.camera = mapCamera
+        self.setRegion(region, animated: true)
+        self.setCenter(centerCoordinate, animated: true)
+        self.camera = mapCamera
+    }
+}
+
+struct SomeViewRepresentable: UIViewRepresentable {
+
+    let someView = SomeView()
+    
+    func makeUIView(context: Context) -> SomeView {
+        someView.backgroundColor = UIColor.red
+        return someView
+    }
+    
+    func updateUIView(_ uiView: SomeView, context: Context) {
+        //
+    }
+    
+    func callFoo() {
+        someView.foo()
+    }
+    
+    func callSetup() {
+        someView.setUp()
     }
 }
 
@@ -75,15 +71,16 @@ struct ActivityIndicator: UIViewRepresentable {
 
 struct Panel: View {
     var body: some View {
-        VStack {
+        VStack
+        {
             Spacer()
             Text("")
-                .frame(width:200, height:50)
+                .frame(width:250, height:50)
                 .background(Color(.black))
                 .opacity(0.5)
                 .cornerRadius(15.0)
                     .overlay (
-                        Text("London, England")
+                        Text("London, England (re-center)")
                             .foregroundColor(.white)
                             .background(Color(.clear))
                             .frame(width:200, height: 40)
@@ -95,26 +92,28 @@ struct Panel: View {
 
 struct ContentView: View {
     
+    let someView = SomeViewRepresentable()
     @State var myCurrentPage: Int = 0
-    @State var myCenter = CLLocationCoordinate2D(latitude: 51.5003646652, longitude: -0.1214328476)
     
     var body: some View {
         ZStack {
             VStack {
-                MapView(centerCoordinate: .constant(myCenter))
-                    
+                someView
+                    .onAppear {
+                        self.someView.callSetup()
+                        self.someView.callFoo()
+                    }
             }
             ZStack {
                 VStack {
                     
                     Button(action: {
-                        self.recenterMap()
+                        self.someView.callFoo()
                     }) {
                         Panel()
                             .background(Color(.clear))
                             .padding(.bottom, -50)
                     }
-                    
                     
                     // The ActivityIndicatorView can be tapped to adjust PageControl.
                     Button(action: {
@@ -142,12 +141,6 @@ struct ContentView: View {
         if myCurrentPage > 4 {
             myCurrentPage = 0
         }
-    }
-    
-    func recenterMap() {
-        print("TODO: re-center the map.")
-        let thisCenter = CLLocationCoordinate2D(latitude: 51.5003646652, longitude: -0.1214328476)
-        MapView(centerCoordinate: .constant(thisCenter))
     }
 }
 
